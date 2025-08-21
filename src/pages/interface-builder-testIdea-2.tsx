@@ -17,6 +17,12 @@ const InterfaceBuilder = () => {
   const [showTestInputsDialog, setShowTestInputsDialog] = useState(false);
   const [newRuleInput, setNewRuleInput] = useState({ name: '', value: '', description: '', type: 'Text' });
   const [newLocalVariable, setNewLocalVariable] = useState({ name: '', value: '' });
+  const [testCases, setTestCases] = useState([
+    { name: 'Default Test Case', values: {}, isDefault: true }
+  ]);
+  const [activeTestCase, setActiveTestCase] = useState(0);
+  const [showTestDropdown, setShowTestDropdown] = useState(false);
+  const [currentTestCase, setCurrentTestCase] = useState(0);
 
   const componentGroups = {
     'Layouts': [
@@ -129,13 +135,60 @@ const InterfaceBuilder = () => {
           <button className="p-2 hover:bg-black/10 rounded text-gray-700"><Undo size={18} /></button>
           <button className="p-2 hover:bg-black/10 rounded text-gray-700"><Redo size={18} /></button>
           <button className="p-2 hover:bg-black/10 rounded text-gray-700"><PieChart size={18} /></button>
-          <button 
-            onClick={() => setShowTestInputsDialog(true)}
-            className="px-3 py-1 bg-white border-2 rounded hover:bg-gray-50 font-medium" 
-            style={{ borderColor: '#2322f0', color: '#2322f0' }}
-          >
-            TEST
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowTestDropdown(!showTestDropdown)}
+              className="px-3 py-1 bg-white border-2 rounded hover:bg-gray-50 font-medium flex items-center gap-1" 
+              style={{ borderColor: '#2322f0', color: '#2322f0' }}
+            >
+              {testCases[currentTestCase]?.name || 'TEST'}
+              <ChevronDown size={14} />
+            </button>
+            {showTestDropdown && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-48">
+                <button
+                  onClick={() => {
+                    setShowTestDropdown(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 border-b border-gray-100"
+                >
+                  Refresh
+                </button>
+                <button
+                  onClick={() => {
+                    setShowTestInputsDialog(true);
+                    setShowTestDropdown(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 border-b border-gray-100"
+                >
+                  Edit test cases
+                </button>
+                {testCases.map((testCase, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      const updatedRules = ruleInputs.map(rule => ({
+                        ...rule,
+                        value: testCase.values[rule.name] ?? rule.value
+                      }));
+                      setRuleInputs(updatedRules);
+                      setCurrentTestCase(index);
+                      setShowTestDropdown(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center justify-between ${
+                      currentTestCase === index ? 'bg-blue-50 text-blue-600' : ''
+                    }`}
+                  >
+                    <span>{testCase.name}</span>
+                    <div className="flex items-center gap-2">
+                      {testCase.isDefault && <span className="text-xs text-gray-500">(Default)</span>}
+                      {currentTestCase === index && <span className="text-blue-600">✓</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button className="px-3 py-1 text-white rounded hover:opacity-90 font-medium" style={{ backgroundColor: '#2322f0' }}>SAVE</button>
           <button className="p-2 hover:bg-black/10 rounded text-gray-700"><Search size={18} /></button>
           <button className="p-2 hover:bg-black/10 rounded text-gray-700"><Settings size={18} /></button>
@@ -780,9 +833,97 @@ const InterfaceBuilder = () => {
       {/* Test Inputs Dialog */}
       {showTestInputsDialog && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-4/5 max-w-4xl max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-2">Test Inputs</h3>
-            <p className="text-sm text-gray-600 mb-4">Enter initial input values to test interface</p>
+          <div className="bg-white rounded-lg p-6 w-4/5 max-w-5xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Test Cases</h3>
+                <p className="text-sm text-gray-600">Create multiple test scenarios with different input values</p>
+              </div>
+              <button
+                onClick={() => {
+                  const newTestCase = {
+                    name: `Test Case ${testCases.length + 1}`,
+                    values: ruleInputs.reduce((acc, rule) => ({ ...acc, [rule.name]: rule.value }), {})
+                  };
+                  setTestCases([...testCases, newTestCase]);
+                  setActiveTestCase(testCases.length);
+                }}
+                className="px-3 py-1 text-white rounded-md hover:opacity-90 flex items-center gap-1"
+                style={{ backgroundColor: '#343380' }}
+              >
+                <Plus size={14} />
+                Add Test Case
+              </button>
+            </div>
+            
+            {/* Test Case Tabs */}
+            <div className="flex gap-1 mb-4 border-b">
+              {testCases.map((testCase, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveTestCase(index)}
+                  className={`px-3 py-2 text-sm rounded-t-md border-b-2 ${
+                    activeTestCase === index 
+                      ? 'border-blue-500 text-blue-600 bg-blue-50' 
+                      : 'border-transparent text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  {testCase.isDefault ? `${testCase.name} (Default)` : testCase.name}
+                </button>
+              ))}
+            </div>
+            
+            {/* Test Case Header with Actions */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  value={testCases[activeTestCase]?.name || ''}
+                  onChange={(e) => {
+                    const updatedTestCases = [...testCases];
+                    updatedTestCases[activeTestCase].name = e.target.value;
+                    setTestCases(updatedTestCases);
+                  }}
+                  className="text-lg font-medium bg-transparent border-none outline-none"
+                  placeholder="Test case name"
+                />
+                {testCases[activeTestCase]?.isDefault && (
+                  <span className="text-sm text-gray-500 ml-1">(Default)</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {!testCases[activeTestCase]?.isDefault && (
+                  <button
+                    onClick={() => {
+                      const updatedTestCases = testCases.map((tc, i) => ({
+                        ...tc,
+                        isDefault: i === activeTestCase
+                      }));
+                      setTestCases(updatedTestCases);
+                    }}
+                    className="px-2 py-1 text-xs text-blue-600 border border-blue-300 rounded hover:bg-blue-50"
+                  >
+                    Set as Default
+                  </button>
+                )}
+                {testCases.length > 1 && !testCases[activeTestCase]?.isDefault && (
+                  <button
+                    onClick={() => {
+                      const updatedTestCases = testCases.filter((_, i) => i !== activeTestCase);
+                      setTestCases(updatedTestCases);
+                      if (activeTestCase >= updatedTestCases.length) {
+                        setActiveTestCase(updatedTestCases.length - 1);
+                      } else if (activeTestCase > 0) {
+                        setActiveTestCase(activeTestCase - 1);
+                      }
+                    }}
+                    className="px-2 py-1 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            </div>
             
             <div className="overflow-x-auto">
               <table className="w-full border-collapse border border-gray-300">
@@ -795,37 +936,40 @@ const InterfaceBuilder = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {ruleInputs.map((rule, index) => (
-                    <tr key={rule.name}>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{rule.name}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-gray-600">{rule.description}</td>
-                      <td className="border border-gray-300 px-3 py-2">
-                        <input
-                          type="text"
-                          value={rule.value}
-                          onChange={(e) => {
-                            const updatedRules = [...ruleInputs];
-                            updatedRules[index].value = e.target.value;
-                            setRuleInputs(updatedRules);
-                          }}
-                          className="w-full p-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                      </td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">
-                        {rule.type === 'Color' ? (
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded border" 
-                              style={{ backgroundColor: rule.value }}
-                            />
-                            <span className="font-mono text-xs">{rule.value}</span>
-                          </div>
-                        ) : (
-                          <span className="font-mono text-xs">{rule.value}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {ruleInputs.map((rule, index) => {
+                    const currentValue = testCases[activeTestCase]?.values[rule.name] ?? rule.value;
+                    return (
+                      <tr key={rule.name}>
+                        <td className="border border-gray-300 px-3 py-2 text-sm">{rule.name}</td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-gray-600">{rule.description}</td>
+                        <td className="border border-gray-300 px-3 py-2">
+                          <input
+                            type="text"
+                            value={currentValue}
+                            onChange={(e) => {
+                              const updatedTestCases = [...testCases];
+                              updatedTestCases[activeTestCase].values[rule.name] = e.target.value;
+                              setTestCases(updatedTestCases);
+                            }}
+                            className="w-full p-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2 text-sm">
+                          {rule.type === 'Color' ? (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border" 
+                                style={{ backgroundColor: currentValue }}
+                              />
+                              <span className="font-mono text-xs">{currentValue}</span>
+                            </div>
+                          ) : (
+                            <span className="font-mono text-xs">{currentValue}</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -837,21 +981,13 @@ const InterfaceBuilder = () => {
               >
                 Cancel
               </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowTestInputsDialog(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Set as defaults and test
-                </button>
-                <button
-                  onClick={() => setShowTestInputsDialog(false)}
-                  className="px-4 py-2 text-white rounded-md hover:opacity-90"
-                  style={{ backgroundColor: '#343380' }}
-                >
-                  Test interface
-                </button>
-              </div>
+              <button
+                onClick={() => setShowTestInputsDialog(false)}
+                className="px-4 py-2 text-white rounded-md hover:opacity-90"
+                style={{ backgroundColor: '#343380' }}
+              >
+                Test Interface
+              </button>
             </div>
           </div>
         </div>
