@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Play, Save, Undo, Redo, Search, Settings, User, Eye, Smartphone, Globe, Zap, Grid3X3, Palette, Monitor, Code, PieChart, Layout, Square, CreditCard, Layers, Columns, Grid, FileText, Calendar, Hash, Upload, Type, CheckSquare, ChevronDown, BarChart3, Gauge, Image, Target, MessageSquare, Tag, Clock, Video, MousePointer, List, Users, Folder, TreePine, Plus, Edit, AlignLeft, AlignCenter, AlignRight, ArrowUp, ArrowDown, EyeOff, Minus } from 'lucide-react';
 
 const InterfaceBuilder = () => {
-  const [mode, setMode] = useState<'design' | 'expression'>('design');
   const [leftPaneOpen, setLeftPaneOpen] = useState(true);
   const [rightPaneOpen, setRightPaneOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('components');
@@ -17,6 +16,21 @@ const InterfaceBuilder = () => {
   const [showTestInputsDialog, setShowTestInputsDialog] = useState(false);
   const [newRuleInput, setNewRuleInput] = useState({ name: '', value: '', description: '', type: 'Text' });
   const [newLocalVariable, setNewLocalVariable] = useState({ name: '', value: '' });
+  const [droppedComponents, setDroppedComponents] = useState([]);
+
+  const handleDragStart = (e, componentName) => {
+    e.dataTransfer.setData('text/plain', componentName);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const componentName = e.dataTransfer.getData('text/plain');
+    setDroppedComponents(prev => [...prev, { id: Date.now(), name: componentName }]);
+  };
 
   const componentGroups = {
     'Layouts': [
@@ -83,24 +97,6 @@ const InterfaceBuilder = () => {
           <div className="flex items-center gap-3">
             <img src="/obj_interface144px.svg" alt="Interface" className="w-8 h-8" />
             <span className="font-semibold text-lg">Interface Builder</span>
-          </div>
-          <div className="flex bg-black/10 rounded-lg p-1">
-            <button
-              onClick={() => setMode('design')}
-              className={`p-2 rounded ${mode === 'design' ? 'bg-white shadow-sm' : ''}`}
-              style={{ color: mode === 'design' ? '#2322f0' : '#374151' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 1792 2100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                <path d="M 0 311.88867 L 0 529.03125 L 217.14258 529.03125 L 217.14258 311.88867 L 0 311.88867 z M 393.71484 311.88867 L 393.71484 529.03125 L 610.85742 529.03125 L 610.85742 311.88867 L 393.71484 311.88867 z M 787.42773 311.88867 L 787.42773 529.03125 L 1004.5723 529.03125 L 1004.5723 311.88867 L 787.42773 311.88867 z M 1181.1426 311.88867 L 1181.1426 529.03125 L 1398.2852 529.03125 L 1398.2852 311.88867 L 1181.1426 311.88867 z M 1574.8574 311.88867 L 1574.8574 529.03125 L 1792 529.03125 L 1792 311.88867 L 1574.8574 311.88867 z M 852.70703 606.74609 C 846.05803 606.74609 839.40869 608.13194 832.75977 610.90234 C 810.59666 620.3217 799.51562 636.66617 799.51562 659.9375 L 799.51562 1909.9395 C 799.51562 1933.2108 810.59666 1949.5572 832.75977 1958.9766 C 839.40869 1961.747 846.05803 1963.1309 852.70703 1963.1309 C 867.11309 1963.1309 879.57996 1957.8672 890.10742 1947.3398 L 1149.416 1688.0312 L 1308.1602 2063.6973 C 1314.2551 2076.9952 1323.9501 2086.4143 1337.248 2091.9551 C 1350.5459 2097.4959 1364.1207 2097.4959 1377.9727 2091.9551 L 1525.082 2029.6211 C 1538.3799 2023.5262 1547.799 2013.8292 1553.3398 2000.5312 C 1558.8806 1987.2332 1558.8806 1973.6586 1553.3398 1959.8066 L 1386.2852 1564.1934 L 1703.7715 1564.1934 C 1727.0429 1564.1934 1743.3893 1553.1124 1752.8086 1530.9492 C 1762.2279 1509.3401 1758.3483 1490.2239 1741.1719 1473.6016 L 890.10742 622.53711 C 880.13403 612.0096 867.66716 606.74609 852.70703 606.74609 z M 0 655.57227 L 0 872.7168 L 217.14258 872.7168 L 217.14258 655.57227 L 0 655.57227 z M 1574.8574 655.57227 L 1574.8574 872.7168 L 1792 872.7168 L 1792 655.57227 L 1574.8574 655.57227 z M 0 1004.6641 L 0 1221.8066 L 217.14258 1221.8066 L 217.14258 1004.6641 L 0 1004.6641 z M 1574.8574 1004.6641 L 1574.8574 1221.8066 L 1792 1221.8066 L 1792 1004.6641 L 1574.8574 1004.6641 z M 1.4980469 1342.9414 L 1.4980469 1560.0859 L 218.64062 1560.0859 L 218.64062 1342.9414 L 1.4980469 1342.9414 z M 0 1686.625 L 0 1903.7695 L 217.14258 1903.7695 L 217.14258 1686.625 L 0 1686.625 z M 393.71484 1686.625 L 393.71484 1903.7695 L 610.85742 1903.7695 L 610.85742 1686.625 L 393.71484 1686.625 z "></path>
-              </svg>
-            </button>
-            <button
-              onClick={() => setMode('expression')}
-              className={`p-2 rounded ${mode === 'expression' ? 'bg-white shadow-sm' : ''}`}
-              style={{ color: mode === 'expression' ? '#2322f0' : '#374151' }}
-            >
-              <Code size={16} />
-            </button>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -223,6 +219,7 @@ const InterfaceBuilder = () => {
                               className="flex items-center gap-2 px-2 bg-white border border-gray-200 rounded cursor-move hover:bg-gray-50 text-sm"
                               style={{ height: '25px' }}
                               draggable
+                              onDragStart={(e) => handleDragStart(e, comp)}
                             >
                               {getIcon(comp)}
                               <span className="truncate">{comp}</span>
@@ -300,7 +297,12 @@ const InterfaceBuilder = () => {
         )}
 
         {/* Live Preview */}
-        <div className="flex-1 relative" style={{ backgroundColor: '#FCFCFC' }}>
+        <div 
+          className="flex-1 relative" 
+          style={{ backgroundColor: '#FCFCFC' }}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
           {!previewMode && (
             <button
               onClick={() => setLeftPaneOpen(!leftPaneOpen)}
@@ -312,6 +314,18 @@ const InterfaceBuilder = () => {
           
           <div className="h-full flex items-start justify-center pt-8">
             <div className="max-w-md w-full p-8 space-y-4 bg-white rounded-lg shadow-sm">
+              {droppedComponents.map((component) => (
+                <div key={component.id} className="p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{component.name}</span>
+                  </div>
+                </div>
+              ))}
+              {droppedComponents.length === 0 && (
+                <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center text-gray-500">
+                  Drag components from the palette to build your interface
+                </div>
+              )}
               <div className="relative">
                 {selectedComponent === 'text-field' && (
                   <div className="absolute -top-4 left-2 px-2 py-1 text-xs text-white rounded" style={{ backgroundColor: '#6666FF' }}>
